@@ -67,16 +67,18 @@ local Plugin = {
                   ["Aliases"] = {'floopkill'},
                   ["Function"] = function(args, speaker)
                         for _, player in pairs(getPlayer(args[1], speaker)) do
-                              table.insert(loopkill, player)
-                              local char = game:GetService('Players')[player].Character
-                              if char and char:FindFirstChild('Head') then
-                                    local head = char.Head
-                                    make_request({
-                                          [1] = 'Remove';
-                                          [2] = {
-                                                head;
-                                          };
-                                    })
+                              if table.find(loopkill, player) == nil then
+                                    table.insert(loopkill, player)
+                                    local char = game:GetService('Players')[player].Character
+                                    if char and char:FindFirstChild('Head') then
+                                          local head = char.Head
+                                          make_request({
+                                                [1] = 'Remove';
+                                                [2] = {
+                                                      head;
+                                                };
+                                          })
+                                    end
                               end
                         end
                   end
