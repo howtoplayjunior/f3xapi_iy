@@ -1,0 +1,278 @@
+local function get_f3x()
+      local lp = game:GetService('Players').LocalPlayer
+      if lp.Character:FindFirstChild('Building Tools') then
+            return lp.Character:FindFirstChild('Building Tools')
+      elseif lp.Backpack:FindFirstChild('Building Tools') then
+            return lp.Backpack:FindFirstChild('Building Tools')
+      end
+      return nil
+end
+
+local function make_request(args)
+      local f3x = get_f3x()
+      if f3x == nil then
+            notify('Couldnt find F3X tool')
+            return
+      end
+      
+      f3x.SyncAPI.ServerEndpoint:InvokeServer(unpack(args))  
+end
+
+local click_del = nil
+local unanchor = nil
+local loopkill = {}
+
+local function on_childadded(child)
+      task.wait()
+      if game:GetService('Players'):GetPlayerFromCharacter(child) ~= nil and table.find(loopkill, child.Name) then
+            local head = child:WaitForChild('Head')
+            make_request({
+                  [1] = 'Remove';
+                  [2] = {
+                        head;
+                  };
+            })
+      end
+end
+
+game:GetService('Workspace').ChildAdded:Connect(on_childadded)
+
+local Plugin = {
+      ["PluginName"] = "F3X API",
+      ["PluginDescription"] = "Take adventage of old F3X api",
+      ["Commands"] = {
+            ["f3xkill"] = {
+                  ["ListName"] = "f3xkill / fkill [plr]",
+                  ["Description"] = "Kill the player by deleting their characters head",
+                  ["Aliases"] = {'fkill'},
+                  ["Function"] = function(args, speaker)
+                        for _, player in pairs(getPlayer(args[1], speaker)) do
+                              local char = game:GetService('Players')[player].Character
+                              if char and char:FindFirstChild('Head') then
+                                    local head = char.Head
+                                    make_request({
+                                          [1] = 'Remove';
+                                          [2] = {
+                                                head;
+                                          };
+                                    })
+                              end
+                        end
+                  end
+            };
+
+            ["f3xloopkill"] = {
+                  ["ListName"] = "f3xloopkill / floopkill [plr]",
+                  ["Description"] = "Kill the player every time they spawn",
+                  ["Aliases"] = {'floopkill'},
+                  ["Function"] = function(args, speaker)
+                        for _, player in pairs(getPlayer(args[1], speaker)) do
+                              table.insert(loopkill, player)
+                              local char = game:GetService('Players')[player].Character
+                              if char and char:FindFirstChild('Head') then
+                                    local head = char.Head
+                                    make_request({
+                                          [1] = 'Remove';
+                                          [2] = {
+                                                head;
+                                          };
+                                    })
+                              end
+                        end
+                  end
+            };
+
+            ["f3xunloopkill"] = {
+                  ["ListName"] = "f3xunloopkill / funloopkill [plr]",
+                  ["Description"] = "Removes the player from loopkill table",
+                  ["Aliases"] = {'funloopkill'},
+                  ["Function"] = function(args, speaker)
+                        for _, player in pairs(getPlayer(args[1], speaker)) do
+                              table.remove(loopkill, table.find(loopkill, player))
+                        end
+                  end
+            };
+
+            ["f3xburn"] = {
+                  ["ListName"] = "f3xburn / fburn [plr]",
+                  ["Description"] = "Burns the player",
+                  ["Aliases"] = {'fburn'},
+                  ["Function"] = function(args, speaker)
+                        for _, player in pairs(getPlayer(args[1], speaker)) do
+                              local char = game:GetService('Players')[player].Character
+                              if char then
+                                    for _, part in pairs(char:GetDescendants()) do
+                                          if part:IsA('BasePart') then
+                                                make_request({
+                                                      [1] = "CreateDecorations",
+                                                      [2] = {
+                                                            [1] = {
+                                                                  ["Part"] = part,
+                                                                  ["DecorationType"] = "Fire"
+                                                            }
+                                                      }
+                                                })
+                                                make_request({
+                                                      [1] = "SyncColor",
+                                                      [2] = {
+                                                            [1] = {
+                                                                  ["Part"] = part,
+                                                                  ["Color"] = Color3.fromRGB(0, 0, 0),
+                                                                  ["UnionColoring"] = true
+                                                            }
+                                                      }
+                                                })
+                                                task.spawn(function()
+                                                      if part.Name ~= 'Head' and part.Name ~= 'LowerTorso' and part.Name ~= 'UpperTorso' and part.Name ~= 'Torso' then
+                                                            task.wait(math.random(20, 70)/10)
+                                                            make_request({
+                                                                  [1] = 'Remove';
+                                                                  [2] = {
+                                                                        part;
+                                                                  };
+                                                            })
+                                                      end
+                                                end)
+                                          end
+                                    end
+                              end
+                        end
+                  end
+            };
+
+            ["f3xsink"] = {
+                  ["ListName"] = "f3xsink / fsink [plr]",
+                  ["Description"] = "Sink a player into the ground, making them unable to move",
+                  ["Aliases"] = {'fsink'},
+                  ["Function"] = function(args, speaker)
+                        for _, player in pairs(getPlayer(args[1], speaker)) do
+                              local char = game:GetService('Players')[player].Character
+                              if char and char:FindFirstChild('HumanoidRootPart') then
+                                    local hrp = char.HumanoidRootPart
+                                    make_request({
+                                          [1] = 'Remove';
+                                          [2] = {
+                                                hrp;
+                                          };
+                                    })
+                              end
+                        end
+                  end
+            };
+
+            ["f3xclickdelete"] = {
+                  ["ListName"] = "f3xclickdelete / fdelete",
+                  ["Description"] = "Enable click deleting parts",
+                  ["Aliases"] = {'fdelete'},
+                  ["Function"] = function(args, speaker)
+                        local mouse = game:GetService('Players').LocalPlayer:GetMouse()
+                        click_del = mouse.Button1Down:Connect(function()
+                              local target = mouse.Target
+                              make_request({
+                                    [1] = 'Remove';
+                                    [2] = {
+                                          target;
+                                    };
+                              })
+                        end)
+                        notify('Click to delete any part')
+                  end
+            };
+
+            ["f3xunclickdelete"] = {
+                  ["ListName"] = "f3xunclickdelete / fundelete",
+                  ["Description"] = "Disable click deleting parts",
+                  ["Aliases"] = {'fundelete'},
+                  ["Function"] = function(args, speaker)
+                        if click_del ~= nil then
+                              click_del:Disconnect()
+                              click_del = nil
+                        end
+                        notify('Disabled click delete')
+                  end
+            };
+
+            ["f3xclickunanchor"] = {
+                  ["ListName"] = "f3xclickunanchor / funanchor",
+                  ["Description"] = "Enable click unanchoring parts",
+                  ["Aliases"] = {'funanchor'},
+                  ["Function"] = function(args, speaker)
+                        local mouse = game:GetService('Players').LocalPlayer:GetMouse()
+                        unanchor = mouse.Button1Down:Connect(function()
+                              local target = mouse.Target
+                              make_request({
+                                    [1] = "SyncAnchor",
+                                    [2] = {
+                                          [1] = {
+                                                ["Part"] = target,
+                                                ["Anchored"] = false
+                                          }
+                                    }
+                              })
+                        end)
+                        notify('Click to unanchor any part')
+                  end
+            };
+
+            ["f3xunclickunanchor"] = {
+                  ["ListName"] = "f3xunclickunanchor / fununanchor",
+                  ["Description"] = "Disable click unanchoring parts",
+                  ["Aliases"] = {'fununanchor'},
+                  ["Function"] = function(args, speaker)
+                        if unanchor ~= nil then
+                              unanchor:Disconnect()
+                              unanchor = nil
+                        end
+                        notify('Disabled click unanchor')
+                  end
+            };
+
+            ["f3xthaw"] = {
+                  ["ListName"] = "f3xthaw / fthaw [plr]",
+                  ["Description"] = "Thaw players in place",
+                  ["Aliases"] = {'fthaw'},
+                  ["Function"] = function(args, speaker)
+                        for _, player in pairs(getPlayer(args[1], speaker)) do
+                              local char = game:GetService('Players')[player].Character
+                              if char and char:FindFirstChild('HumanoidRootPart') then
+                                    local hrp = char.HumanoidRootPart
+                                    make_request({
+                                          [1] = "SyncAnchor",
+                                          [2] = {
+                                                [1] = {
+                                                      ["Part"] = hrp,
+                                                      ["Anchored"] = true
+                                                }
+                                          }
+                                    })
+                              end
+                        end
+                  end
+            };
+
+            ["f3xunthaw"] = {
+                  ["ListName"] = "f3xunthaw / funthaw [plr]",
+                  ["Description"] = "Unthaws the players",
+                  ["Aliases"] = {'funthaw'},
+                  ["Function"] = function(args, speaker)
+                        for _, player in pairs(getPlayer(args[1], speaker)) do
+                              local char = game:GetService('Players')[player].Character
+                              if char and char:FindFirstChild('HumanoidRootPart') then
+                                    local hrp = char.HumanoidRootPart
+                                    make_request({
+                                          [1] = "SyncAnchor",
+                                          [2] = {
+                                                [1] = {
+                                                      ["Part"] = hrp,
+                                                      ["Anchored"] = false
+                                                }
+                                          }
+                                    })
+                              end
+                        end
+                  end
+            };
+      };
+}
+  
+  return Plugin
